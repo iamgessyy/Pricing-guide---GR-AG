@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grag Studio — Pricing Calculator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f4f0; color: #1a1a1a; padding: 2rem 1rem; }
+.wrap { max-width: 740px; margin: 0 auto; }
+.header { margin-bottom: 2rem; }
+.logo { font-size: 22px; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 3px; }
+.tagline { font-size: 13px; color: #888; }
+.section-label { font-size: 11px; font-weight: 600; color: #999; letter-spacing: 0.09em; text-transform: uppercase; margin-bottom: 12px; }
+.card { background: #fff; border: 1px solid #e8e6e0; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+.session-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 8px; }
+.session-btn { background: #f5f4f0; border: 1px solid #e8e6e0; border-radius: 8px; padding: 12px 14px; cursor: pointer; text-align: left; transition: all 0.12s; }
+.session-btn:hover { border-color: #ccc; }
+.session-btn.active { border: 2px solid #1D9E75; background: #eaf7f2; }
+.s-name { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
+.s-price { font-size: 12px; color: #999; margin-bottom: 3px; }
+.s-includes { font-size: 11px; color: #bbb; line-height: 1.5; }
+.session-btn.active .s-name { color: #0d6e50; }
+.session-btn.active .s-price { color: #1D9E75; }
+.session-btn.active .s-includes { color: #4aaa85; }
+.row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.row:last-of-type { margin-bottom: 0; }
+.row label { font-size: 13px; color: #666; min-width: 185px; }
+.row input[type=range] { flex: 1; accent-color: #1D9E75; cursor: pointer; }
+.row .val { font-size: 13px; font-weight: 600; color: #1a1a1a; min-width: 48px; text-align: right; }
+.note { font-size: 11px; color: #bbb; margin-top: 10px; font-style: italic; }
+.addon-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 8px; }
+.addon-btn { background: #f5f4f0; border: 1px solid #e8e6e0; border-radius: 8px; padding: 10px 12px; cursor: pointer; font-size: 13px; display: flex; justify-content: space-between; align-items: center; gap: 8px; transition: all 0.12s; }
+.addon-btn:hover { border-color: #ccc; }
+.addon-btn.active { border: 2px solid #185FA5; background: #e8f2fb; }
+.addon-btn span { color: #1a1a1a; }
+.addon-btn .ap { font-size: 12px; color: #aaa; white-space: nowrap; }
+.addon-btn.active span { color: #0c447c; }
+.addon-btn.active .ap { color: #185FA5; }
+.summary { background: #f5f4f0; border-radius: 8px; padding: 1rem 1.25rem; }
+.sr { display: flex; justify-content: space-between; font-size: 13px; color: #777; padding: 4px 0; }
+.sr.total { font-size: 17px; font-weight: 700; color: #1a1a1a; border-top: 1px solid #e0ddd6; margin-top: 8px; padding-top: 10px; }
+.sr.dep { font-size: 14px; font-weight: 600; color: #1D9E75; }
+.sr.bal { font-size: 13px; color: #888; }
+.empty { font-size: 13px; color: #bbb; padding: 0.25rem 0; }
+.client-row { display: flex; gap: 10px; margin-bottom: 1rem; align-items: center; }
+.client-row label { font-size: 13px; color: #666; min-width: 90px; }
+.client-row input[type=text] { flex: 1; border: 1px solid #e8e6e0; border-radius: 8px; padding: 8px 12px; font-size: 13px; background: #f5f4f0; color: #1a1a1a; outline: none; transition: border-color 0.12s; }
+.client-row input[type=text]:focus { border-color: #aaa; }
+.email-box { background: #f5f4f0; border-radius: 8px; padding: 1rem 1.25rem; font-size: 13px; color: #1a1a1a; line-height: 1.8; white-space: pre-wrap; margin-bottom: 1rem; font-family: inherit; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+button.action { background: transparent; border: 1px solid #d0cec8; border-radius: 8px; padding: 8px 18px; font-size: 13px; cursor: pointer; color: #1a1a1a; transition: background 0.12s; }
+button.action:hover { background: #f0ede8; }
+button.action.copied { color: #1D9E75; border-color: #1D9E75; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">GR+AG STUDIO</div>
+    <div class="tagline">Session pricing calculator &amp; client quote generator · gragstudio.com</div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Session type</div>
+    <div class="session-grid" id="session-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Session details</div>
+    <div class="row" id="row-hours">
+      <label>Duration (hours)</label>
+      <input type="range" min="1" max="12" step="1" value="1" id="hours" oninput="update()">
+      <span class="val" id="hours-out">1h</span>
+    </div>
+    <div class="row" id="row-people">
+      <label>Number of people</label>
+      <input type="range" min="1" max="30" step="1" value="1" id="people" oninput="update()">
+      <span class="val" id="people-out">1</span>
+    </div>
+    <div class="row" id="row-outfits">
+      <label>Extra outfits (beyond 2)</label>
+      <input type="range" min="0" max="6" step="1" value="0" id="outfits" oninput="update()">
+      <span class="val" id="outfits-out">0</span>
+    </div>
+    <div class="row" id="row-photos">
+      <label>Extra edited photos (+10 sets)</label>
+      <input type="range" min="0" max="10" step="1" value="0" id="photos" oninput="update()">
+      <span class="val" id="photos-out">+0</span>
+    </div>
+    <div class="note" id="base-note"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Add-ons</div>
+    <div class="addon-grid" id="addon-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Pricing summary</div>
+    <div class="summary" id="summary">
+      <div class="empty">Select a session type above to see pricing.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Client quote email</div>
+    <div class="client-row">
+      <label>Client name</label>
+      <input type="text" id="client-name" placeholder="e.g. Sarah" oninput="update()">
+    </div>
+    <div class="email-box" id="email-box">Select a session type above to generate a quote email.</div>
+    <div class="btn-row">
+      <button class="action" id="copy-btn" onclick="copyEmail()">Copy email</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const sessions = [
+  {
+    id:'portrait', name:'Solo portrait', base:450, desc:'from $450',
+    includes:'1h · 1–2 outfits · 15 edited images',
+    baseHours:1, basePhotos:15, baseOutfits:2,
+    extraHourRate:80, extraPhotoSetRate:100, extraOutfitRate:50,
+    showPeople:false, showOutfits:true, showPhotos:true
+  },
+  {
+    id:'kids', name:'Kids portfolio', base:300, desc:'from $300',
+    includes:'1h · modeling & portfolio prep · under 18',
+    baseHours:1, basePhotos:15, baseOutfits:2,
+    extraHourRate:60, extraPhotoSetRate:80, extraOutfitRate:40,
+    showPeople:false, showOutfits:true, showPhotos:true
+  },
+  {
+    id:'headshots', name:'Headshots', base:425, desc:'from $425',
+    includes:'1h · 1–2 looks · 15 edited images',
+    baseHours:1, basePhotos:15, baseOutfits:2,
+    extraHourRate:75, extraPhotoSetRate:100, extraOutfitRate:40,
+    showPeople:false, showOutfits:true, showPhotos:true
+  },
+  {
+    id:'group', name:'Group / family', base:550, desc:'from $550',
+    includes:'1h · up to 5 people · 15 edited images',
+    baseHours:1, basePhotos:15, baseOutfits:0,
+    extraHourRate:100, extraPhotoSetRate:100, extraOutfitRate:0,
+    showPeople:true, showOutfits:false, showPhotos:true
+  },
+  {
+    id:'wedding', name:'Wedding', base:1800, desc:'from $1,800',
+    includes:'Half day · up to 6h · full gallery delivery',
+    baseHours:6, basePhotos:60, baseOutfits:0,
+    extraHourRate:200, extraPhotoSetRate:0, extraOutfitRate:0,
+    showPeople:false, showOutfits:false, showPhotos:false
+  },
+  {
+    id:'commercial', name:'Commercial / brand', base:900, desc:'from $900',
+    includes:'Half day · usage rights negotiable',
+    baseHours:4, basePhotos:30, baseOutfits:0,
+    extraHourRate:150, extraPhotoSetRate:100, extraOutfitRate:0,
+    showPeople:true, showOutfits:false, showPhotos:true
+  },
+  {
+    id:'music', name:'Music video', base:1200, desc:'from $1,200',
+    includes:'Full day · custom scope · BTS included',
+    baseHours:8, basePhotos:0, baseOutfits:0,
+    extraHourRate:0, extraPhotoSetRate:0, extraOutfitRate:0,
+    showPeople:false, showOutfits:false, showPhotos:false
+  },
+  {
+    id:'restaurant', name:'Restaurant / social content', base:600, desc:'from $600',
+    includes:'2h · food & atmosphere · social-ready gallery',
+    baseHours:2, basePhotos:20, baseOutfits:0,
+    extraHourRate:100, extraPhotoSetRate:100, extraOutfitRate:0,
+    showPeople:false, showOutfits:false, showPhotos:true
+  },
+];
+
+const addons = [
+  { id:'rush',      name:'Rush delivery (48h)',   price:150 },
+  { id:'location',  name:'Location / travel fee', price:75  },
+  { id:'assistant', name:'On-set assistant',       price:100 },
+  { id:'license',   name:'Commercial license',     price:200 },
+  { id:'bts',       name:'BTS / reel clip',        price:175 },
+];
+
+let activeSession = null;
+let activeAddons = new Set();
+
+function fmt(n){ return '$' + Math.round(n).toLocaleString(); }
+function getS(){ return sessions.find(x => x.id === activeSession); }
+
+function calcTotal(){
+  const s = getS(); if(!s) return 0;
+  const hours     = parseInt(document.getElementById('hours').value);
+  const people    = parseInt(document.getElementById('people').value);
+  const outfits   = parseInt(document.getElementById('outfits').value);
+  const photoSets = parseInt(document.getElementById('photos').value);
+  let p = s.base;
+  p += Math.max(0, hours - s.baseHours) * s.extraHourRate;
+  p += outfits * s.extraOutfitRate;
+  p += photoSets * s.extraPhotoSetRate;
+  if(s.showPeople && people > 5) p += (people - 5) * 30;
+  activeAddons.forEach(id => { const a = addons.find(x => x.id === id); if(a) p += a.price; });
+  return p;
+}
+
+function update(){
+  const s         = getS();
+  const hours     = parseInt(document.getElementById('hours').value);
+  const people    = parseInt(document.getElementById('people').value);
+  const outfits   = parseInt(document.getElementById('outfits').value);
+  const photoSets = parseInt(document.getElementById('photos').value);
+
+  document.getElementById('hours-out').textContent   = hours + 'h';
+  document.getElementById('people-out').textContent  = people;
+  document.getElementById('outfits-out').textContent = outfits;
+  document.getElementById('photos-out').textContent  = '+' + (photoSets * 10);
+
+  document.getElementById('row-people').style.display  = s && s.showPeople  ? 'flex' : 'none';
+  document.getElementById('row-outfits').style.display = s && s.showOutfits ? 'flex' : 'none';
+  document.getElementById('row-photos').style.display  = s && s.showPhotos  ? 'flex' : 'none';
+  document.getElementById('base-note').textContent = s ? 'Base package: ' + s.includes : '';
+
+  const summaryEl = document.getElementById('summary');
+  const emailEl   = document.getElementById('email-box');
+
+  if(!s){
+    summaryEl.innerHTML = '<div class="empty">Select a session type above to see pricing.</div>';
+    emailEl.textContent = 'Select a session type above to generate a quote email.';
+    return;
+  }
+
+  const total   = calcTotal();
+  const deposit = Math.round(total * 0.5);
+  const balance = total - deposit;
+  const extraHours  = Math.max(0, hours - s.baseHours);
+  const photoCount  = s.basePhotos + photoSets * 10;
+
+  let lines = `<div class="sr"><span>${s.name} — base rate</span><span>${fmt(s.base)}</span></div>`;
+  if(extraHours > 0)
+    lines += `<div class="sr"><span>Extra time (+${extraHours}h @ ${fmt(s.extraHourRate)}/h)</span><span>${fmt(extraHours * s.extraHourRate)}</span></div>`;
+  if(outfits > 0)
+    lines += `<div class="sr"><span>Extra outfits (+${outfits})</span><span>${fmt(outfits * s.extraOutfitRate)}</span></div>`;
+  if(photoSets > 0)
+    lines += `<div class="sr"><span>Extra edited photos (+${photoSets * 10})</span><span>${fmt(photoSets * s.extraPhotoSetRate)}</span></div>`;
+  if(s.showPeople && people > 5)
+    lines += `<div class="sr"><span>Extra people (${people - 5} over 5)</span><span>${fmt((people - 5) * 30)}</span></div>`;
+
+  let addonEmailLines = '';
+  activeAddons.forEach(id => {
+    const a = addons.find(x => x.id === id);
+    if(a){
+      lines += `<div class="sr"><span>${a.name}</span><span>${fmt(a.price)}</span></div>`;
+      addonEmailLines += `\n  — ${a.name}: ${fmt(a.price)}`;
+    }
+  });
+
+  summaryEl.innerHTML = `
+    ${lines}
+    <div class="sr total"><span>Total</span><span>${fmt(total)}</span></div>
+    <div class="sr dep"><span>Deposit to book (50%)</span><span>${fmt(deposit)}</span></div>
+    <div class="sr bal"><span>Balance due on shoot day</span><span>${fmt(balance)}</span></div>`;
+
+  const clientName   = document.getElementById('client-name').value.trim() || 'there';
+  const addonSection = addonEmailLines ? `\nAdd-ons:\n${addonEmailLines}\n` : '';
+  const outfitLine   = s.showOutfits ? `\n  Outfits: up to ${s.baseOutfits + outfits}` : '';
+  const photoLine    = s.showPhotos && photoCount > 0 ? `\n  Edited images: ${photoCount}` : '';
+  const peopleLine   = s.showPeople ? `\n  People: ${people}` : '';
+
+  emailEl.textContent =
+`Hi ${clientName},
+
+Thanks so much for reaching out — I'd love to work with you!
+
+Here's your custom quote:
+
+  Session: ${s.name}
+  Duration: ${hours} hour${hours !== 1 ? 's' : ''}${peopleLine}${outfitLine}${photoLine}${addonSection}
+
+  ────────────────────
+  Total:                ${fmt(total)}
+  Deposit to book:      ${fmt(deposit)}  (50%)
+  Balance on shoot day: ${fmt(balance)}
+  ────────────────────
+
+To secure your date, a 50% deposit of ${fmt(deposit)} is required at booking. The remaining ${fmt(balance)} is due on the day of the shoot.
+
+Feel free to reply with any questions — I'm happy to chat through the details or adjust the package to fit what you have in mind.
+
+Looking forward to creating something great together!
+
+Warm,
+Gessy
+GR+AG Studio
+www.gragstudio.com`;
+}
+
+function copyEmail(){
+  const text = document.getElementById('email-box').textContent;
+  if(text.startsWith('Select')) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy email'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+const sg = document.getElementById('session-grid');
+sessions.forEach(s => {
+  const btn = document.createElement('button');
+  btn.className = 'session-btn';
+  btn.innerHTML = `<div class="s-name">${s.name}</div><div class="s-price">${s.desc}</div><div class="s-includes">${s.includes}</div>`;
+  btn.onclick = () => {
+    activeSession = s.id;
+    document.querySelectorAll('.session-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const sess = getS();
+    document.getElementById('hours').value   = sess.baseHours;
+    document.getElementById('people').value  = 1;
+    document.getElementById('outfits').value = 0;
+    document.getElementById('photos').value  = 0;
+    update();
+  };
+  sg.appendChild(btn);
+});
+
+const ag = document.getElementById('addon-grid');
+addons.forEach(a => {
+  const btn = document.createElement('button');
+  btn.className = 'addon-btn';
+  btn.innerHTML = `<span>${a.name}</span><span class="ap">${fmt(a.price)}</span>`;
+  btn.onclick = () => {
+    if(activeAddons.has(a.id)){ activeAddons.delete(a.id); btn.classList.remove('active'); }
+    else { activeAddons.add(a.id); btn.classList.add('active'); }
+    update();
+  };
+  ag.appendChild(btn);
+});
+
+update();
+</script>
+</body>
+</html>
